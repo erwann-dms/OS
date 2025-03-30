@@ -1,23 +1,8 @@
-CC = i686-elf-gcc
-ASM = nasm
-LD = i686-elf-ld
+KERNEL_OBJS = kernel/shell.o kernel/kmalloc.o
+FS_OBJS = fs/ext2/super.o fs/ext2/inode.o fs/ext2/dir.o fs/ext2/file.o fs/ext2/block.o fs/disk/ata.o
 
 all: myos.iso
 
-kernel.elf: kernel/main.o kernel/interrupts.o kernel/vga.o
-    $(LD) -T kernel/linker.ld -o boot/kernel.elf $^
-
-%.o: %.c
-    $(CC) -c $< -o $@ -ffreestanding -nostdlib -O2
-
-boot.bin: boot/boot.asm
-    $(ASM) -f bin $< -o $@
-
-myos.iso: kernel.elf
-    mkdir -p isodir/boot/grub
-    cp boot/kernel.elf isodir/boot/
-    cp boot/grub/grub.cfg isodir/boot/grub/
+myos.iso: $(KERNEL_OBJS) $(FS_OBJS)
+    $(LD) -T kernel.ld -o kernel.elf $^
     grub-mkrescue -o $@ isodir/
-
-clean:
-    rm -f *.o boot/*.bin boot/*.elf myos.iso

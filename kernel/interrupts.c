@@ -1,5 +1,6 @@
 #include <stdint.h>
 
+// Structure d'une entrée IDT
 struct idt_entry {
     uint16_t offset_low;
     uint16_t selector;
@@ -10,6 +11,15 @@ struct idt_entry {
 
 struct idt_entry idt[256];
 
+// Handler d'interruption générique
+void irq_handler() {
+    asm volatile("pusha");  // Sauvegarde les registres
+    // Vérifie quelle IRQ a été déclenchée
+    asm volatile("popa");   // Restaure les registres
+    asm volatile("iret");   // Retour de l'interruption
+}
+
+// Configure une entrée dans l'IDT
 void idt_set_gate(uint8_t num, uint32_t handler) {
     idt[num].offset_low = handler & 0xFFFF;
     idt[num].selector = 0x08;  // Segment de code
@@ -17,14 +27,12 @@ void idt_set_gate(uint8_t num, uint32_t handler) {
     idt[num].offset_high = (handler >> 16) & 0xFFFF;
 }
 
+// Initialise l'IDT et active les interruptions
 void init_idt() {
-    // Exemple: Configure une interruption clavier (IRQ1)
-    idt_set_gate(33, (uint32_t)keyboard_handler);  // IRQ1 -> vecteur 33
+    // Configure les interruptions matérielles (IRQ0-IRQ15)
+    for (int i = 0; i < 16; i++) {
+        idt_set_gate(32 + i, (uint32_t)irq_handler);
+    }
     asm volatile("lidt idt_descriptor");
-}
-
-void keyboard_handler() {
-    // Lire le scancode depuis le port 0x60
-    uint8_t scancode = inb(0x60);
-    // Traitement basique (à compléter)
+    asm volatile("sti");  // Active les interruptions
 }
