@@ -1,3 +1,5 @@
+Ouvrez le fichier pour le lire correctement
+
 Mon OS:
 
 structure:
